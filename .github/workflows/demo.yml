@@ -1,0 +1,40 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: 11
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Build React App
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      - name: Build Java App
+        run: ./mvnw package -DskipTests
+
+      - name: Deploy to Server
+        run: |
+          ssh user@server 'mkdir -p /path/to/deploy'
+          scp -r frontend/build/* user@server:/path/to/deploy
+          scp backend/target/*.jar user@server:/path/to/deploy/app.jar
+          ssh user@server 'sudo systemctl restart your-app'
